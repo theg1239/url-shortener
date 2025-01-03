@@ -1,16 +1,8 @@
 import { redirect } from 'next/navigation';
 import clientPromise from '@/lib/mongodb';
 
-interface PageParams {
-  shortCode: string;
-}
-
-interface PageProps {
-  params: PageParams;
-}
-
-export default async function RedirectPage({ params }: PageProps) {
-  const { shortCode } = params;
+export default async function RedirectPage({ params }: { params: Promise<{ shortCode: string }> }) {
+  const { shortCode } = await params;
 
   if (!shortCode) {
     redirect('/');
@@ -23,7 +15,7 @@ export default async function RedirectPage({ params }: PageProps) {
 
     const mapping = await collection.findOne({ shortCode });
 
-    if (mapping && mapping.originalUrl) {
+    if (mapping?.originalUrl) {
       await collection.updateOne(
         { shortCode },
         { $inc: { clickCount: 1 }, $set: { lastClicked: new Date() } }
@@ -38,5 +30,3 @@ export default async function RedirectPage({ params }: PageProps) {
     redirect('/');
   }
 }
-
-export const runtime = 'edge';
