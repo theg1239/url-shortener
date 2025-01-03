@@ -39,4 +39,4 @@ export default async function RedirectPage({ params }: PageProps) {
   }
 }
 
-export const runtime = 'experimental-edge';
+export const runtime = 'edge';
