@@ -1,3 +1,7 @@
+export const config = {
+  runtime: 'nodejs',
+};
+
 import { redirect } from 'next/navigation';
 import clientPromise from '@/lib/mongodb';
 
@@ -8,42 +12,40 @@ interface RedirectPageProps {
 }
 
 export default async function RedirectPage({ params }: RedirectPageProps) {
-  const { shortCode } = await params;
-
-  if (!shortCode) {
-    redirect('/');
-  }
-
-  let mapping;
   try {
+    const { shortCode } = await params;
+
+    if (!shortCode) {
+      console.warn('No shortCode provided. Redirecting to homepage.');
+      redirect('/');
+    }
+
+    console.time('DB Connection');
     const client = await clientPromise;
     const db = client.db('urlShortener');
     const collection = db.collection('urlMappings');
+    console.timeEnd('DB Connection');
 
-    mapping = await collection.findOne({ shortCode });
-  } catch (error) {
-    console.error('Database error:', error);
-    // Redirect to homepage on database errors
-    redirect('/');
-  }
+    console.time('Find Mapping');
+    const mapping = await collection.findOne({ shortCode });
+    console.timeEnd('Find Mapping');
 
-  if (mapping?.originalUrl) {
-    try {
-      const client = await clientPromise;
-      const db = client.db('urlShortener');
-      const collection = db.collection('urlMappings');
-
+    if (mapping?.originalUrl) {
+      console.time('Update Click Count');
       await collection.updateOne(
         { shortCode },
         { $inc: { clickCount: 1 }, $set: { lastClicked: new Date() } }
       );
+      console.timeEnd('Update Click Count');
 
+      console.log(`Redirecting to: ${mapping.originalUrl}`);
       redirect(mapping.originalUrl);
-    } catch (error) {
-      console.error('Update error:', error);
+    } else {
+      console.warn(`No mapping found for shortCode: ${shortCode}. Redirecting to homepage.`);
       redirect('/');
     }
-  } else {
+  } catch (error) {
+    console.error('Error in RedirectPage:', error);
     redirect('/');
   }
 }
