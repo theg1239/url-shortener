@@ -2,14 +2,12 @@ import { redirect } from 'next/navigation';
 import clientPromise from '@/lib/mongodb';
 
 interface RedirectPageProps {
-  params: {
-    shortCode: string;
-  };
+  params: Promise<{ shortCode: string }>; // Treat params as a promise
 }
 
 export default async function RedirectPage({ params }: RedirectPageProps) {
-  const awaitedParams = await params;
-  const { shortCode } = awaitedParams;
+  const awaitedParams = await params; // Await the params
+  const { shortCode } = awaitedParams; // Destructure after awaiting
 
   if (!shortCode) {
     redirect('/');
