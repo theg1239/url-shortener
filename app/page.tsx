@@ -9,6 +9,15 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [copySuccess, setCopySuccess] = useState('');
 
+  const normalizeUrl = (url: string): string => {
+    try {
+      const normalizedUrl = new URL(url.includes('://') ? url : `https://${url}`);
+      return normalizedUrl.href;
+    } catch {
+      return '';
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -16,11 +25,18 @@ export default function Home() {
     setCopySuccess('');
     setIsLoading(true);
 
+    const normalizedUrl = normalizeUrl(originalUrl);
+    if (!normalizedUrl) {
+      setError('Invalid URL');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/shorten', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ originalUrl }),
+        body: JSON.stringify({ originalUrl: normalizedUrl }),
       });
 
       const data = await res.json();
@@ -43,8 +59,7 @@ export default function Home() {
         .writeText(shortUrl)
         .then(() => setCopySuccess('Copied!'))
         .catch(() => setCopySuccess('Failed to copy'));
-      
-      // Reset the success message after 2 seconds
+
       setTimeout(() => setCopySuccess(''), 2000);
     }
   };
@@ -88,6 +103,7 @@ export default function Home() {
                 onClick={handleCopy}
                 className="p-1 bg-gray-700 text-white text-sm rounded hover:bg-gray-600 transition"
               >
+                Copy
               </button>
             </div>
             {copySuccess && <p className="text-green-500 mt-2">{copySuccess}</p>}
