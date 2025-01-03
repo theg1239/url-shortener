@@ -113,7 +113,6 @@ export default function Home() {
                 onClick={handleCopy}
                 className="p-1 bg-gray-700 text-white text-sm rounded hover:bg-gray-600 transition"
               >
-                Copy
               </button>
             </div>
             {copySuccess && <p className="text-green-500 mt-2">{copySuccess}</p>}
