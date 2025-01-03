@@ -11,7 +11,17 @@ export default function Home() {
 
   const normalizeUrl = (url: string): string => {
     try {
-      const normalizedUrl = new URL(url.includes('://') ? url : `https://${url}`);
+      const trimmedUrl = url.trim();
+
+      if (trimmedUrl.startsWith('//')) {
+        return `https:${trimmedUrl}`;
+      }
+
+      if (!/^https?:\/\//i.test(trimmedUrl)) {
+        return `https://${trimmedUrl}`;
+      }
+
+      const normalizedUrl = new URL(trimmedUrl);
       return normalizedUrl.href;
     } catch {
       return '';
@@ -27,7 +37,7 @@ export default function Home() {
 
     const normalizedUrl = normalizeUrl(originalUrl);
     if (!normalizedUrl) {
-      setError('Invalid URL');
+      setError('Please enter a valid URL.');
       setIsLoading(false);
       return;
     }
@@ -44,10 +54,10 @@ export default function Home() {
       if (res.ok) {
         setShortUrl(data.shortUrl);
       } else {
-        setError(data.error || 'Something went wrong');
+        setError(data.error || 'Something went wrong.');
       }
     } catch (err) {
-      setError('Failed to shorten URL');
+      setError('Failed to shorten URL.');
     } finally {
       setIsLoading(false);
     }
@@ -71,7 +81,7 @@ export default function Home() {
         <form onSubmit={handleSubmit} className="mb-6 space-y-4">
           <div className="flex flex-col">
             <input
-              type="url"
+              type="text"
               placeholder="Enter long URL"
               value={originalUrl}
               onChange={(e) => setOriginalUrl(e.target.value)}
@@ -103,6 +113,7 @@ export default function Home() {
                 onClick={handleCopy}
                 className="p-1 bg-gray-700 text-white text-sm rounded hover:bg-gray-600 transition"
               >
+                Copy
               </button>
             </div>
             {copySuccess && <p className="text-green-500 mt-2">{copySuccess}</p>}
