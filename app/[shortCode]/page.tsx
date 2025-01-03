@@ -1,10 +1,12 @@
 import { redirect } from 'next/navigation';
 import clientPromise from '@/lib/mongodb';
 
+interface PageParams {
+  shortCode: string;
+}
+
 interface PageProps {
-  params: {
-    shortCode: string;
-  };
+  params: PageParams;
 }
 
 export default async function RedirectPage({ params }: PageProps) {
@@ -36,3 +38,5 @@ export default async function RedirectPage({ params }: PageProps) {
     redirect('/');
   }
 }
+
+export const runtime = 'experimental-edge';
