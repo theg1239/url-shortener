@@ -7,11 +7,13 @@ export default function Home() {
   const [shortUrl, setShortUrl] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [copySuccess, setCopySuccess] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setShortUrl('');
+    setCopySuccess('');
     setIsLoading(true);
 
     try {
@@ -32,6 +34,18 @@ export default function Home() {
       setError('Failed to shorten URL');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCopy = () => {
+    if (shortUrl) {
+      navigator.clipboard
+        .writeText(shortUrl)
+        .then(() => setCopySuccess('Copied!'))
+        .catch(() => setCopySuccess('Failed to copy'));
+      
+      // Reset the success message after 2 seconds
+      setTimeout(() => setCopySuccess(''), 2000);
     }
   };
 
@@ -61,14 +75,22 @@ export default function Home() {
         {shortUrl && (
           <div className="mt-6 p-4 border border-black">
             <p className="mb-2 font-bold">Shortened URL:</p>
-            <a
-              href={shortUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 underline break-all"
-            >
-              {shortUrl}
-            </a>
+            <div className="flex items-center space-x-2">
+              <a
+                href={shortUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline break-all"
+              >
+                {shortUrl}
+              </a>
+              <button
+                onClick={handleCopy}
+                className="p-1 bg-gray-700 text-white text-sm rounded hover:bg-gray-600 transition"
+              >
+              </button>
+            </div>
+            {copySuccess && <p className="text-green-500 mt-2">{copySuccess}</p>}
           </div>
         )}
         {error && (
@@ -80,4 +102,3 @@ export default function Home() {
     </main>
   );
 }
-
