@@ -10,40 +10,36 @@ interface RedirectPageProps {
 export default async function RedirectPage({ params }: RedirectPageProps) {
   const { shortCode } = params;
 
-  console.log('Received shortCode:', shortCode);
-
   if (!shortCode) {
-    console.log('No shortCode provided. Redirecting to homepage.');
     redirect('/');
+    return null; // Prevent further code execution
   }
 
-  let mapping;
   try {
     const client = await clientPromise;
     const db = client.db('urlShortener');
     const collection = db.collection('urlMappings');
 
-    mapping = await collection.findOne({ shortCode });
+    // Fetch mapping for the given shortCode
+    const mapping = await collection.findOne({ shortCode });
 
-    console.log('Found mapping:', mapping); 
-
-    if (mapping?.originalUrl) {
-      await collection.updateOne(
-        { shortCode },
-        { $inc: { clickCount: 1 }, $set: { lastClicked: new Date() } }
-      );
-
-      console.log('Click count updated. Redirecting to:', mapping.originalUrl);
+    if (!mapping?.originalUrl) {
+      redirect('/');
+      return null; // Prevent further code execution
     }
-  } catch (error) {
-    console.error('Error in RedirectPage:', error);
-    redirect('/');
-  }
 
-  if (mapping?.originalUrl) {
+    // Update click count and lastClicked timestamp
+    await collection.updateOne(
+      { shortCode },
+      { $inc: { clickCount: 1 }, $set: { lastClicked: new Date() } }
+    );
+
+    // Redirect to the original URL
     redirect(mapping.originalUrl);
-  } else {
-    console.log('No mapping found. Redirecting to homepage.');
+    return null; // Prevent further code execution
+  } catch (error) {
+    console.error('Error handling shortCode:', error);
     redirect('/');
+    return null; // Prevent further code execution
   }
 }
