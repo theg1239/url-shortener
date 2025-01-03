@@ -14,19 +14,25 @@ export default async function RedirectPage({ params }: PageProps) {
     redirect('/');
   }
 
-  const client = await clientPromise;
-  const db = client.db('urlShortener');
-  const collection = db.collection('urlMappings');
+  try {
+    const client = await clientPromise;
+    const db = client.db('urlShortener');
+    const collection = db.collection('urlMappings');
 
-  const mapping = await collection.findOne({ shortCode });
-  if (mapping && mapping.originalUrl) {
-    await collection.updateOne(
-      { shortCode },
-      { $inc: { clickCount: 1 }, $set: { lastClicked: new Date() } }
-    );
+    const mapping = await collection.findOne({ shortCode });
 
-    redirect(mapping.originalUrl);
-  } else {
+    if (mapping && mapping.originalUrl) {
+      await collection.updateOne(
+        { shortCode },
+        { $inc: { clickCount: 1 }, $set: { lastClicked: new Date() } }
+      );
+
+      redirect(mapping.originalUrl);
+    } else {
+      redirect('/');
+    }
+  } catch (error) {
+    console.error('Error in RedirectPage:', error);
     redirect('/');
   }
 }
