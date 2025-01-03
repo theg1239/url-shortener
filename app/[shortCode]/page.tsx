@@ -8,8 +8,7 @@ interface PageProps {
 }
 
 export default async function RedirectPage({ params }: PageProps) {
-  const resolvedParams = await params;
-  const { shortCode } = resolvedParams;
+  const { shortCode } = params;
 
   if (!shortCode) {
     redirect('/');
