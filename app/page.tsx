@@ -7,6 +7,8 @@ export default function Home() {
   const [shortUrl, setShortUrl] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+  const [password, setPassword] = useState('');
   const [copySuccess, setCopySuccess] = useState('');
 
   const normalizeUrl = (url: string): string => {
@@ -33,7 +35,22 @@ export default function Home() {
     setError('');
     setShortUrl('');
     setCopySuccess('');
+
+    const normalizedUrl = normalizeUrl(originalUrl);
+    if (!normalizedUrl) {
+      setError('Please enter a valid URL.');
+      return;
+    }
+
+    setShowPasswordPrompt(true);
+  };
+
+  const submitWithPassword = async (providedPassword: string) => {
+    setShowPasswordPrompt(false);
     setIsLoading(true);
+    setError('');
+    setShortUrl('');
+    setCopySuccess('');
 
     const normalizedUrl = normalizeUrl(originalUrl);
     if (!normalizedUrl) {
@@ -46,13 +63,15 @@ export default function Home() {
       const res = await fetch('/api/shorten', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ originalUrl: normalizedUrl }),
+        body: JSON.stringify({ originalUrl: normalizedUrl, password: providedPassword }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
         setShortUrl(data.shortUrl);
+      } else if (res.status === 401) {
+        setError('Unauthorized: incorrect password.');
       } else {
         setError(data.error || 'Something went wrong.');
       }
@@ -60,6 +79,7 @@ export default function Home() {
       setError('Failed to shorten URL.');
     } finally {
       setIsLoading(false);
+      setPassword('');
     }
   };
 
@@ -97,6 +117,39 @@ export default function Home() {
             {isLoading ? 'Shortening...' : 'Shorten URL'}
           </button>
         </form>
+
+        {/* Password prompt modal */}
+        {showPasswordPrompt && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white text-black p-6 rounded shadow max-w-sm w-full">
+              <h2 className="text-lg font-bold mb-2">Enter password to shorten</h2>
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full p-2 border mb-4"
+              />
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={() => {
+                    setShowPasswordPrompt(false);
+                    setPassword('');
+                  }}
+                  className="px-3 py-1 border rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => submitWithPassword(password)}
+                  className="px-3 py-1 bg-black text-white rounded"
+                >
+                  Submit
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         {shortUrl && (
           <div className="mt-6 p-4 border border-black">
             <p className="mb-2 font-bold">Shortened URL:</p>
